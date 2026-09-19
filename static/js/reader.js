@@ -492,6 +492,13 @@ function initTTSPlayer() {
     let selectedVoice = null;
     let keepAliveTimer = null;
     let autoNextTimeout = null;
+    let currentAudio = null; // Đối tượng Audio HTML5 cho giọng AI Studio (Edge-TTS)
+
+    // Danh sách Giọng AI Studio Siêu Thực (Edge-TTS Neural)
+    const EDGE_STUDIO_VOICES = [
+        { id: 'edge:vi-VN-HoaiMyNeural', name: '🌸 Hoài My (Nữ AI Studio - Truyền cảm)' },
+        { id: 'edge:vi-VN-NamMinhNeural', name: '⚡ Nam Minh (Nam AI Studio - Hào sảng)' }
+    ];
 
     // Load saved preferences
     if (autoScrollCheck) {
@@ -540,61 +547,84 @@ function initTTSPlayer() {
         }
     }
 
+    function stopCurrentAudio() {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.onended = null;
+            currentAudio.onerror = null;
+            currentAudio.onplay = null;
+            currentAudio = null;
+        }
+        window.speechSynthesis.cancel();
+        stopKeepAlive();
+    }
+
     // Voice Loading
     function formatVoiceLabel(v) {
         const name = v.name;
-        if (name.includes('HoaiMy')) return 'Hoài My (Nữ - Microsoft Tự Nhiên)';
-        if (name.includes('NamMinh')) return 'Nam Minh (Nam - Microsoft Tự Nhiên)';
+        if (name.includes('HoaiMy')) return 'Hoài My (Nữ - Microsoft Natural)';
+        if (name.includes('NamMinh')) return 'Nam Minh (Nam - Microsoft Natural)';
         if (name.includes('Google') && (name.includes('tiếng Việt') || v.lang.includes('vi'))) return 'Google Tiếng Việt';
         if (name.includes('An') && v.lang.includes('vi')) return 'An (Microsoft Tiếng Việt)';
         return `${v.name} (${v.lang})`;
     }
 
     function populateVoices() {
-        const allVoices = window.speechSynthesis.getVoices();
-        if (!allVoices || allVoices.length === 0) return;
+        const allVoices = window.speechSynthesis.getVoices() || [];
+        voiceSelect.innerHTML = '';
 
-        // Ưu tiên giọng tiếng Việt
+        // 1. Nhóm Giọng AI Studio (Chất lượng phòng thu siêu thực)
+        const studioGroup = document.createElement('optgroup');
+        studioGroup.label = '🌟 Giọng AI Studio (Chuẩn MC Audio)';
+        EDGE_STUDIO_VOICES.forEach(ev => {
+            const opt = document.createElement('option');
+            opt.value = ev.id;
+            opt.textContent = ev.name;
+            studioGroup.appendChild(opt);
+        });
+        voiceSelect.appendChild(studioGroup);
+
+        // 2. Nhóm Giọng Trình duyệt / Thiết bị (Web Speech)
         let viVoices = allVoices.filter(v => {
             const lang = (v.lang || '').toLowerCase();
             const name = (v.name || '').toLowerCase();
             return lang.startsWith('vi') || lang.includes('vietnam') || name.includes('vietnamese') || name.includes('tiếng việt');
         });
 
-        voiceSelect.innerHTML = '';
-        const savedVoiceURI = localStorage.getItem('novel_tts_voice_uri');
+        if (allVoices.length > 0) {
+            const localGroup = document.createElement('optgroup');
+            localGroup.label = '💻 Giọng Trình Duyệt / Thiết Bị';
 
-        if (viVoices.length > 0) {
-            viVoices.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.voiceURI;
-                opt.textContent = formatVoiceLabel(v);
-                voiceSelect.appendChild(opt);
-            });
-
-            // Chọn giọng đã lưu hoặc giọng đầu tiên
-            const match = viVoices.find(v => v.voiceURI === savedVoiceURI);
-            if (match) {
-                selectedVoice = match;
-                voiceSelect.value = match.voiceURI;
+            if (viVoices.length > 0) {
+                viVoices.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.voiceURI;
+                    opt.textContent = formatVoiceLabel(v);
+                    localGroup.appendChild(opt);
+                });
             } else {
-                selectedVoice = viVoices[0];
-                voiceSelect.value = selectedVoice.voiceURI;
+                allVoices.slice(0, 8).forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.voiceURI;
+                    opt.textContent = `${v.name} (${v.lang})`;
+                    localGroup.appendChild(opt);
+                });
             }
-        } else {
-            // Trường hợp máy chưa cài gói tiếng Việt, fallback hiển thị các giọng hệ thống
-            const optWarn = document.createElement('option');
-            optWarn.value = '';
-            optWarn.textContent = 'Mặc định (Khuyên dùng Edge/Chrome để có giọng Việt)';
-            voiceSelect.appendChild(optWarn);
+            voiceSelect.appendChild(localGroup);
+        }
 
-            allVoices.slice(0, 10).forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.voiceURI;
-                opt.textContent = `${v.name} (${v.lang})`;
-                voiceSelect.appendChild(opt);
-            });
-            selectedVoice = allVoices[0];
+        // Chọn giọng đã lưu hoặc mặc định Hoài My AI Studio
+        const savedVoiceURI = localStorage.getItem('novel_tts_voice_uri') || 'edge:vi-VN-HoaiMyNeural';
+        voiceSelect.value = savedVoiceURI;
+        if (!voiceSelect.value) {
+            voiceSelect.value = 'edge:vi-VN-HoaiMyNeural';
+        }
+
+        // Cập nhật selectedVoice nếu là giọng Web Speech
+        if (!voiceSelect.value.startsWith('edge:')) {
+            selectedVoice = allVoices.find(v => v.voiceURI === voiceSelect.value) || null;
+        } else {
+            selectedVoice = null;
         }
     }
 
@@ -605,11 +635,16 @@ function initTTSPlayer() {
 
     if (voiceSelect) {
         voiceSelect.addEventListener('change', () => {
-            const allVoices = window.speechSynthesis.getVoices();
-            selectedVoice = allVoices.find(v => v.voiceURI === voiceSelect.value) || null;
-            if (selectedVoice) {
-                localStorage.setItem('novel_tts_voice_uri', selectedVoice.voiceURI);
+            const val = voiceSelect.value;
+            localStorage.setItem('novel_tts_voice_uri', val);
+
+            if (val.startsWith('edge:')) {
+                selectedVoice = null;
+            } else {
+                const allVoices = window.speechSynthesis.getVoices();
+                selectedVoice = allVoices.find(v => v.voiceURI === val) || null;
             }
+
             if (isPlaying && !isPaused && currentIndex >= 0) {
                 speakParagraph(currentIndex);
             }
@@ -702,7 +737,7 @@ function initTTSPlayer() {
             return;
         }
 
-        window.speechSynthesis.cancel();
+        stopCurrentAudio();
         currentIndex = idx;
         const pEl = paragraphs[currentIndex];
         const text = pEl.textContent.trim();
@@ -715,44 +750,87 @@ function initTTSPlayer() {
         highlightParagraph(currentIndex);
         updateProgressUI();
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        if (selectedVoice) {
-            utterance.voice = selectedVoice;
-            utterance.lang = selectedVoice.lang || 'vi-VN';
-        } else {
-            utterance.lang = 'vi-VN';
-        }
-
+        const currentVoiceVal = voiceSelect ? voiceSelect.value : 'edge:vi-VN-HoaiMyNeural';
         const rate = parseFloat(speedSelect ? speedSelect.value : '1') || 1.0;
-        utterance.rate = rate;
 
-        utterance.onstart = () => {
-            setPlayerState(true, false, 'Đang đọc...');
-            startKeepAlive();
-        };
+        if (currentVoiceVal.startsWith('edge:')) {
+            // Giọng AI Studio (Edge-TTS Neural)
+            const edgeVoiceName = currentVoiceVal.replace('edge:', '');
+            const audioUrl = `/api/tts/audio?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(edgeVoiceName)}&speed=${rate}`;
 
-        utterance.onend = () => {
-            stopKeepAlive();
-            if (isPlaying && !isPaused) {
-                speakParagraph(currentIndex + 1);
+            setPlayerState(true, false, 'Đang chuẩn bị giọng AI...');
+
+            currentAudio = new Audio(audioUrl);
+
+            currentAudio.onplay = () => {
+                setPlayerState(true, false, 'Đang đọc (AI Studio)...');
+
+                // Tải trước (prefetch) đoạn kế tiếp để chuyển câu không bị trễ
+                if (currentIndex + 1 < paragraphs.length) {
+                    const nextTxt = paragraphs[currentIndex + 1].textContent.trim();
+                    if (nextTxt) {
+                        const prefetchUrl = `/api/tts/audio?text=${encodeURIComponent(nextTxt)}&voice=${encodeURIComponent(edgeVoiceName)}&speed=${rate}`;
+                        fetch(prefetchUrl, { priority: 'low' }).catch(() => {});
+                    }
+                }
+            };
+
+            currentAudio.onended = () => {
+                if (isPlaying && !isPaused) {
+                    speakParagraph(currentIndex + 1);
+                }
+            };
+
+            currentAudio.onerror = (e) => {
+                console.warn('Lỗi phát âm thanh Edge-TTS:', e);
+                if (isPlaying && !isPaused) {
+                    speakParagraph(currentIndex + 1);
+                }
+            };
+
+            currentAudio.play().catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.warn('Lỗi Audio play:', err);
+                }
+            });
+        } else {
+            // Giọng Hệ thống / Trình duyệt (SpeechSynthesis)
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+                utterance.lang = selectedVoice.lang || 'vi-VN';
+            } else {
+                utterance.lang = 'vi-VN';
             }
-        };
+            utterance.rate = rate;
 
-        utterance.onerror = (e) => {
-            stopKeepAlive();
-            // Nếu bị huỷ do người dùng chuyển đoạn thì bỏ qua
-            if (e.error === 'canceled' || e.error === 'interrupted') return;
-            console.warn('Lỗi SpeechSynthesis:', e);
-            if (isPlaying && !isPaused) {
-                speakParagraph(currentIndex + 1);
-            }
-        };
+            utterance.onstart = () => {
+                setPlayerState(true, false, 'Đang đọc...');
+                startKeepAlive();
+            };
 
-        window.speechSynthesis.speak(utterance);
+            utterance.onend = () => {
+                stopKeepAlive();
+                if (isPlaying && !isPaused) {
+                    speakParagraph(currentIndex + 1);
+                }
+            };
+
+            utterance.onerror = (e) => {
+                stopKeepAlive();
+                if (e.error === 'canceled' || e.error === 'interrupted') return;
+                console.warn('Lỗi SpeechSynthesis:', e);
+                if (isPlaying && !isPaused) {
+                    speakParagraph(currentIndex + 1);
+                }
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
     }
 
     function handleChapterEnd() {
-        stopKeepAlive();
+        stopCurrentAudio();
         clearHighlight();
         
         if (autoNextCheck && autoNextCheck.checked && nextChapNum) {
@@ -774,30 +852,38 @@ function initTTSPlayer() {
     }
 
     function playPauseToggle() {
+        const isEdge = voiceSelect && voiceSelect.value.startsWith('edge:');
+
         if (!isPlaying) {
-            // Bắt đầu đọc từ đầu hoặc từ đoạn đang chọn
             const targetIdx = currentIndex >= 0 ? currentIndex : 0;
             speakParagraph(targetIdx);
         } else if (isPaused) {
-            // Tiếp tục
-            window.speechSynthesis.resume();
-            setPlayerState(true, false, 'Đang đọc...');
-            startKeepAlive();
+            if (isEdge && currentAudio) {
+                currentAudio.play();
+                setPlayerState(true, false, 'Đang đọc (AI Studio)...');
+            } else {
+                window.speechSynthesis.resume();
+                setPlayerState(true, false, 'Đang đọc...');
+                startKeepAlive();
+            }
         } else {
-            // Tạm dừng
-            window.speechSynthesis.pause();
-            setPlayerState(true, true, 'Tạm dừng');
-            stopKeepAlive();
+            if (isEdge && currentAudio) {
+                currentAudio.pause();
+                setPlayerState(true, true, 'Tạm dừng');
+            } else {
+                window.speechSynthesis.pause();
+                setPlayerState(true, true, 'Tạm dừng');
+                stopKeepAlive();
+            }
         }
     }
 
     function stopReading() {
-        stopKeepAlive();
+        stopCurrentAudio();
         if (autoNextTimeout) {
             clearTimeout(autoNextTimeout);
             autoNextTimeout = null;
         }
-        window.speechSynthesis.cancel();
         setPlayerState(false, false, 'Sẵn sàng');
         clearHighlight();
         currentIndex = -1;
