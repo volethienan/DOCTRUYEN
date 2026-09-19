@@ -22,6 +22,18 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
+if not os.path.exists(TEMPLATES_DIR):
+    for candidate in [os.path.join(os.getcwd(), "templates"), "/var/task/templates"]:
+        if os.path.exists(candidate):
+            TEMPLATES_DIR = candidate
+            break
+
+if not os.path.exists(STATIC_DIR):
+    for candidate in [os.path.join(os.getcwd(), "static"), "/var/task/static"]:
+        if os.path.exists(candidate):
+            STATIC_DIR = candidate
+            break
+
 app = FastAPI(title="Web Đọc Truyện - Xà Tiên")
 
 # Mount static files
