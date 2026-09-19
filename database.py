@@ -13,52 +13,75 @@ from datetime import datetime
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "novel.db")
 
-def get_connection():
-    conn = sqlite3.connect(DB_PATH, timeout=60.0)
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.row_factory = sqlite3.Row
-    return conn
+def get_connection(read_only: bool = False):
+    is_vercel = bool(os.environ.get("VERCEL"))
+    if read_only or is_vercel:
+        try:
+            conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, timeout=60.0)
+            conn.row_factory = sqlite3.Row
+            return conn
+        except Exception:
+            pass
+
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=60.0)
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+        except Exception:
+            pass
+        conn.row_factory = sqlite3.Row
+        return conn
+    except sqlite3.OperationalError:
+        conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, timeout=60.0)
+        conn.row_factory = sqlite3.Row
+        return conn
 
 def init_db():
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    # Bảng thông tin truyện
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS novel_info (
-        id INTEGER PRIMARY KEY DEFAULT 1,
-        book_id TEXT NOT NULL,
-        title_zh TEXT,
-        title_vi TEXT,
-        author_zh TEXT,
-        author_vi TEXT,
-        description_zh TEXT,
-        description_vi TEXT,
-        source_url TEXT,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-    
-    # Bảng danh sách chương
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS chapters (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        chapter_num INTEGER NOT NULL,
-        title_zh TEXT,
-        title_vi TEXT,
-        url TEXT UNIQUE,
-        content_zh TEXT,
-        content_vi TEXT,
-        status TEXT DEFAULT 'pending', -- pending, crawled, translating, completed, error
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_chapter_num ON chapters(chapter_num)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_chapter_status ON chapters(status)")
-    
-    conn.commit()
-    conn.close()
+    if os.environ.get("VERCEL"):
+        # Trên môi trường Vercel serverless, DB đã có sẵn dữ liệu và file system là read-only
+        return
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        # Bảng thông tin truyện
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS novel_info (
+            id INTEGER PRIMARY KEY DEFAULT 1,
+            book_id TEXT NOT NULL,
+            title_zh TEXT,
+            title_vi TEXT,
+            author_zh TEXT,
+            author_vi TEXT,
+            description_zh TEXT,
+            description_vi TEXT,
+            source_url TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        
+        # Bảng danh sách chương
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS chapters (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chapter_num INTEGER NOT NULL,
+            title_zh TEXT,
+            title_vi TEXT,
+            url TEXT UNIQUE,
+            content_zh TEXT,
+            content_vi TEXT,
+            status TEXT DEFAULT 'pending', -- pending, crawled, translating, completed, error
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_chapter_num ON chapters(chapter_num)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_chapter_status ON chapters(status)")
+        
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Bỏ qua init_db: {e}")
 
 def save_novel_info(book_id: str, title_zh: str, title_vi: str = "", author_zh: str = "", author_vi: str = "", description_zh: str = "", description_vi: str = "", source_url: str = ""):
     conn = get_connection()

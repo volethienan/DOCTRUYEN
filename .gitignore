@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# SQLite journal / wal files
+*.db-shm
+*.db-wal
+*.db-journal
+
 # Temporary browser profiles & caches (rất nặng, không đưa lên git)
 browser_profile/
 audio_cache/
