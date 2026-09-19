@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Xà Tiên: Khai Cục Thôn Phệ Tiên Đế - Đọc Bản Dịch Tiếng Việt Chuẩn{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Banner Truyện -->
+    <section class="novel-hero" id="novel-hero">
+        <div class="novel-hero-backdrop"></div>
+        <div class="novel-hero-content">
+            <div class="novel-cover-art" id="novel-cover">
+                <div class="cover-inner">
+                    <span class="cover-badge">VIP</span>
+                    <div class="cover-title-art">蛇仙</div>
+                    <div class="cover-sub-art">XÀ TIÊN</div>
+                    <div class="cover-bot-art">Khai Cục Thôn Phệ Tiên Đế</div>
+                </div>
+            </div>
+
+            <div class="novel-info-details">
+                <div class="novel-tags">
+                    <span class="tag tag-primary">Tiên Hiệp</span>
+                    <span class="tag tag-secondary">Huyền Huyễn</span>
+                    <span class="tag tag-accent">Nuốt Chửng Tiến Hóa</span>
+                    <span class="tag tag-outline">Bản Dịch Chuẩn</span>
+                </div>
+
+                <h1 class="novel-main-title" id="novel-title">
+                    Xà Tiên: Khai Cục Thôn Phệ Tiên Đế
+                </h1>
+                <p class="novel-original-title">Tên gốc: 《蛇仙：開局吞噬仙帝》</p>
+
+                <div class="novel-meta-grid">
+                    <div class="meta-item">
+                        <span class="meta-label">Tác giả:</span>
+                        <span class="meta-val">咯比猴 (Cạc Tỷ Hầu)</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Phạm vi cào:</span>
+                        <span class="meta-val text-highlight">Chương 2000 → Mới nhất</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Trạng thái:</span>
+                        <span class="meta-val badge-active">Đang cập nhật</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Nguồn gốc:</span>
+                        <a href="https://www.novel543.com/0407603375/" target="_blank" class="meta-link">novel543.com</a>
+                    </div>
+                </div>
+
+                <div class="novel-synopsis">
+                    <p>
+                        Trọng sinh thành một con xà yêu nhỏ bé nơi hoang dã, từng bước thức tỉnh huyết mạch thôn phệ vô thượng! 
+                        Mở đầu chấn động khi dám thôn phệ cả hóa thân của Tiên Đế, nghịch thiên cải mệnh, khuấy đảo cửu thiên thập địa, 
+                        tu luyện hóa rồng, phi thăng vạn giới...
+                    </p>
+                </div>
+
+                <div class="hero-cta-buttons">
+                    <a href="/chapter/2000" class="btn btn-primary" id="btn-read-start">
+                        <span>📖 Bắt đầu đọc từ Chương 2000</span>
+                    </a>
+                    <button class="btn btn-secondary" id="btn-continue-read" style="display: none;">
+                        <span>🔖 Đọc tiếp (Chương <span id="continue-chap-num">2000</span>)</span>
+                    </button>
+                    <a href="#chapters-section" class="btn btn-outline" id="btn-view-toc">
+                        <span>📑 Xem Mục Lục</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats & Crawler Status Banner -->
+    <section class="stats-card" id="stats-banner">
+        <div class="stats-item">
+            <div class="stat-number" id="stat-total">{{ stats.total }}</div>
+            <div class="stat-label">Tổng số chương cào</div>
+        </div>
+        <div class="stats-divider"></div>
+        <div class="stats-item">
+            <div class="stat-number text-success" id="stat-completed">{{ stats.completed }}</div>
+            <div class="stat-label">Chương đã dịch tiếng Việt</div>
+        </div>
+        <div class="stats-divider"></div>
+        <div class="stats-item">
+            <div class="stat-number text-info" id="stat-range">
+                {% if stats.min_chapter %}
+                    {{ stats.min_chapter }} - {{ stats.max_chapter }}
+                {% else %}
+                    Chờ cào...
+                {% endif %}
+            </div>
+            <div class="stat-label">Khoảng chương hiện tại</div>
+        </div>
+    </section>
+
+    <!-- Hướng dẫn cào truyện nhanh nếu chưa có dữ liệu hoặc muốn cào thêm -->
+    <section class="crawler-notice-box">
+        <div class="notice-icon">⚡</div>
+        <div class="notice-content">
+            <h3>Trạng thái cào & cập nhật chương mới</h3>
+            <p>
+                Hệ thống sử dụng Playwright mở Chromium thực tế để bạn dễ dàng vượt qua kiểm tra Cloudflare của novel543.
+                Mỗi khi muốn cào thêm các chương mới nhất hoặc cào từ chương 2000, bạn chỉ cần mở terminal và chạy:
+            </p>
+            <div class="code-box">
+                <code>python crawler.py 2000</code>
+                <button class="copy-btn" onclick="navigator.clipboard.writeText('python crawler.py 2000'); alert('Đã sao chép lệnh!');">Sao chép lệnh</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Danh sách chương (Mục lục từ 2000+) -->
+    <section class="chapters-section" id="chapters-section">
+        <!-- Section Header -->
+        <div class="toc-header-bar">
+            <div class="toc-header-main">
+                <div class="toc-title-group">
+                    <span class="toc-icon-badge">📑</span>
+                    <div>
+                        <h2 class="section-title">Mục Lục Chương</h2>
+                        <p class="section-subtitle">Chương 2000 → 2223 • Đầy đủ bản dịch tiếng Việt</p>
+                    </div>
+                </div>
+                <div class="toc-stats-badge" id="visible-count">
+                    <span class="pulse-dot"></span>
+                    <span class="count-text">Hiển thị {{ chapters|length }}/{{ chapters|length }} chương</span>
+                </div>
+            </div>
+
+            <!-- Quick Jump Input -->
+            <div class="quick-jump-box">
+                <span class="jump-icon">⚡</span>
+                <input type="number" id="jump-input" placeholder="Nhập số chương (vd 2183)..." min="2000" max="2300" class="jump-input">
+                <button type="button" id="btn-jump-go" class="btn-jump" title="Nhảy đến chương">Đi đến ➔</button>
+            </div>
+        </div>
+
+        <!-- Glassmorphism Filter & Sort Control Panel -->
+        <div class="toc-control-panel" id="toc-filter-toolbar">
+            <!-- Top Controls: Search + Sort Buttons -->
+            <div class="panel-row-main">
+                <div class="search-box-interactive">
+                    <span class="search-svg-icon">🔍</span>
+                    <input type="text" id="chapter-search-input" placeholder="Tìm theo số chương (vd: 2183) hoặc tiêu đề..." class="search-input-field" autocomplete="off">
+                    <button type="button" id="btn-search-clear" class="btn-clear-input" title="Xóa tìm kiếm" style="display: none;">✕</button>
+                </div>
+
+                <div class="sort-segmented-control">
+                    <span class="sort-caption">Thứ tự:</span>
+                    <div class="segmented-buttons">
+                        <button type="button" class="btn-segment active" id="btn-sort-asc" data-sort="asc">
+                            <span class="seg-icon">⬆️</span> Cũ ➔ Mới
+                        </button>
+                        <button type="button" class="btn-segment" id="btn-sort-desc" data-sort="desc">
+                            <span class="seg-icon">⬇️</span> Mới ➔ Cũ
+                        </button>
+                    </div>
+                </div>
+
+                <button type="button" id="btn-reset-filters" class="btn-reset-action" style="display: none;">
+                    <span>🔄 Đặt lại</span>
+                </button>
+            </div>
+
+            <!-- Bottom Controls: Range Tabs -->
+            <div class="panel-row-ranges">
+                <span class="ranges-caption">Nhóm chương:</span>
+                <div class="ranges-scroll-track" id="range-chips-container">
+                    <button type="button" class="range-tab active" data-range="all">Tất cả ({{ chapters|length }})</button>
+                    <button type="button" class="range-tab" data-range="2000-2049">2000 - 2049</button>
+                    <button type="button" class="range-tab" data-range="2050-2099">2050 - 2099</button>
+                    <button type="button" class="range-tab" data-range="2100-2149">2100 - 2149</button>
+                    <button type="button" class="range-tab" data-range="2150-2199">2150 - 2199</button>
+                    <button type="button" class="range-tab" data-range="2200-2250">2200 - 2223</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trạng thái không có kết quả tìm kiếm -->
+        <div class="no-results-box" id="no-results-box" style="display: none;">
+            <div class="no-results-icon">🔎</div>
+            <h3>Không tìm thấy chương phù hợp</h3>
+            <p>Không có chương nào khớp với từ khóa tìm kiếm hoặc khoảng chương đang chọn.</p>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-clear-all-filter">Xem lại toàn bộ {{ chapters|length }} chương</button>
+        </div>
+
+        {% if chapters %}
+            <div class="chapters-grid" id="chapters-grid">
+                {% for chap in chapters %}
+                <a href="/chapter/{{ chap.chapter_num }}" class="chapter-card" id="chap-card-{{ chap.chapter_num }}" data-chap-num="{{ chap.chapter_num }}" data-title="{{ chap.title_vi or chap.title_zh }}">
+                    <div class="card-top-meta">
+                        <span class="chap-badge-pill">Chương {{ chap.chapter_num }}</span>
+                        <span class="chap-check-icon" title="Đã có bản dịch Tiếng Việt hoàn chỉnh">✓</span>
+                    </div>
+                    <div class="chap-title">
+                        <span class="chap-title-text">
+                            {% if chap.title_vi %}
+                                {{ chap.title_vi }}
+                            {% else %}
+                                <span class="text-zh">{{ chap.title_zh }}</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="card-bottom-meta">
+                        <span class="read-hint">Đọc chương này</span>
+                        <span class="arrow-hint">➔</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" id="empty-state">
+                <div class="empty-icon">📂</div>
+                <h3>Chưa có chương nào trong CSDL</h3>
+                <p>Hãy chạy file <code>python crawler.py 2000</code> trên terminal để tải và dịch các chương từ 2000 đến mới nhất ngay!</p>
+                <div class="empty-action">
+                    <code>python crawler.py 2000</code>
+                </div>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

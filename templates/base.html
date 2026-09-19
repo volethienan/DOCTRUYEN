@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Đọc Truyện - Xà Tiên: Khai Cục Thôn Phệ Tiên Đế{% endblock %}</title>
+    <meta name="description" content="Đọc truyện online Xà Tiên: Khai Cục Thôn Phệ Tiên Đế bản dịch tiếng Việt mượt mà, đầy đủ các chương mới nhất.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css?v=2.2">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="theme-dark" id="app-body">
+    <!-- Header / Navbar -->
+    <header class="site-header" id="site-header">
+        <div class="header-container">
+            <a href="/" class="brand-logo" id="brand-logo">
+                <span class="logo-icon">🐉</span>
+                <span class="logo-text">Vũ Trụ <strong>Truyện Tiên Hiệp</strong></span>
+            </a>
+            
+            <nav class="nav-links">
+                <a href="/" class="nav-item" id="nav-home">Trang Chủ</a>
+                <a href="/#chapters-section" class="nav-item" id="nav-chapters">Mục Lục (Chương 2000+)</a>
+            </nav>
+
+            <div class="header-actions">
+                <!-- Theme switch quick toggle -->
+                <button class="theme-btn" id="theme-toggle-btn" title="Chuyển đổi giao diện Sáng / Tối / Giấy Cũ">
+                    <span class="theme-icon" id="theme-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer" id="site-footer">
+        <div class="footer-container">
+            <p>Hệ thống Đọc Truyện & Dịch Tự Động • Dữ liệu từ <em>novel543.com</em></p>
+            <p class="footer-sub">Tự động dịch sang Tiếng Việt chuẩn ngữ cảnh • Hỗ trợ đọc tiện lợi</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/reader.js?v=2.2"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if chapter.title_vi %}{{ chapter.title_vi }}{% else %}Chương {{ chapter.chapter_num }}: {{ chapter.title_zh }}{% endif %} - Xà Tiên
+{% endblock %}
+
+{% block content %}
+<!-- Reading Progress Bar -->
+<div class="reading-progress-bar" id="reading-progress-bar"></div>
+
+<div class="reader-container">
+    <!-- Reader Controls Bar (Floating / Sticky) -->
+    <header class="reader-toolbar" id="reader-toolbar">
+        <div class="toolbar-left">
+            <a href="/" class="btn-tool" title="Về danh sách chương">
+                <span>📚 Mục lục</span>
+            </a>
+            <div class="chapter-quick-nav">
+                {% if prev_chap %}
+                    <a href="/chapter/{{ prev_chap.chapter_num }}" class="btn-tool btn-nav" id="btn-prev-chap" title="Phím tắt: Mũi tên trái (←)">
+                        <span>← Chương trước</span>
+                    </a>
+                {% else %}
+                    <button class="btn-tool btn-nav disabled" disabled><span>← Chương trước</span></button>
+                {% endif %}
+
+                <span class="toolbar-chap-badge">Chương {{ chapter.chapter_num }}</span>
+
+                {% if next_chap %}
+                    <a href="/chapter/{{ next_chap.chapter_num }}" class="btn-tool btn-nav" id="btn-next-chap" title="Phím tắt: Mũi tên phải (→)">
+                        <span>Chương sau →</span>
+                    </a>
+                {% else %}
+                    <button class="btn-tool btn-nav disabled" disabled><span>Chương sau →</span></button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="toolbar-right">
+            <!-- Reader Settings Modal / Popup -->
+            <div class="reader-settings">
+                <!-- Theme Buttons -->
+                <div class="theme-buttons-group">
+                    <button class="btn-theme-choice theme-btn-dark active" data-theme="dark" title="Giao diện Tối">🌙</button>
+                    <button class="btn-theme-choice theme-btn-sepia" data-theme="sepia" title="Giao diện Giấy Cũ (Dịu mắt)">📜</button>
+                    <button class="btn-theme-choice theme-btn-light" data-theme="light" title="Giao diện Sáng">☀️</button>
+                </div>
+
+                <div class="separator-v"></div>
+
+                <!-- Font Size Controls -->
+                <div class="font-controls">
+                    <button class="btn-tool-sm" id="btn-font-dec" title="Giảm cỡ chữ">A-</button>
+                    <span class="font-size-indicator" id="font-size-val">19px</span>
+                    <button class="btn-tool-sm" id="btn-font-inc" title="Tăng cỡ chữ">A+</button>
+                </div>
+
+                <div class="separator-v"></div>
+
+                <!-- View Mode: Vi / Bilingual / Zh -->
+                <div class="view-mode-selector">
+                    <select id="view-mode-select" class="select-view-mode" title="Chế độ hiển thị">
+                        <option value="vi" selected>Tiếng Việt</option>
+                        <option value="bilingual">Song Ngữ (Việt - Trung)</option>
+                        <option value="zh">Bản Gốc (Tiếng Trung)</option>
+                    </select>
+                </div>
+
+                <div class="separator-v"></div>
+
+                <!-- TTS Audio Reader Trigger Button -->
+                <button class="btn-tool btn-tts-launch" id="btn-tts-launch" title="Bật trình đọc truyện bằng giọng nói AI Tiếng Việt">
+                    <span class="tts-icon-pulse">🎧</span>
+                    <span class="tts-btn-text">Nghe Đọc</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Reader Article Area -->
+    <article class="reader-article" id="reader-article">
+        <header class="chapter-header">
+            <div class="chap-kicker">
+                <a href="/">Xà Tiên: Khai Cục Thôn Phệ Tiên Đế</a> • Chương {{ chapter.chapter_num }}
+            </div>
+            
+            <h1 class="chapter-title-vi" id="chap-title-vi">
+                {% if chapter.title_vi %}
+                    {{ chapter.title_vi }}
+                {% else %}
+                    Chương {{ chapter.chapter_num }}: {{ chapter.title_zh }}
+                {% endif %}
+            </h1>
+
+            {% if chapter.title_zh %}
+                <h2 class="chapter-title-zh" id="chap-title-zh">
+                    {{ chapter.title_zh }}
+                </h2>
+            {% endif %}
+
+            <div class="chapter-meta">
+                <span>Nguồn: <a href="{{ chapter.url }}" target="_blank">novel543</a></span>
+                <span>•</span>
+                <span>Trạng thái: <strong class="text-success">{{ chapter.status }}</strong></span>
+            </div>
+        </header>
+
+        <!-- Chapter Content Container -->
+        <div class="chapter-content-body font-normal" id="chapter-content-body">
+            <!-- View Mode: Tiếng Việt (Default) -->
+            <div class="content-view-mode content-vi" id="content-vi-view">
+                {% if chapter.content_vi %}
+                    {% for p in chapter.content_vi.split('\n') %}
+                        {% if p.strip() %}
+                            <p class="chapter-paragraph" data-para-idx="{{ loop.index0 }}">{{ p }}</p>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="translating-box">
+                        <p>⚠️ Chương này chưa có bản dịch tiếng Việt hoặc đang trong quá trình dịch.</p>
+                        {% if chapter.content_zh %}
+                            <p>Bạn có thể chuyển sang chế độ <strong>"Bản Gốc (Tiếng Trung)"</strong> ở thanh công cụ phía trên để đọc tạm.</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- View Mode: Tiếng Trung gốc -->
+            <div class="content-view-mode content-zh" id="content-zh-view" style="display: none;">
+                {% if chapter.content_zh %}
+                    {% for p in chapter.content_zh.split('\n') %}
+                        {% if p.strip() %}
+                            <p>{{ p }}</p>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Chưa có nội dung tiếng Trung.</p>
+                {% endif %}
+            </div>
+
+            <!-- View Mode: Song Ngữ -->
+            <div class="content-view-mode content-bilingual" id="content-bilingual-view" style="display: none;">
+                {% if chapter.content_vi and chapter.content_zh %}
+                    {% set vi_paras = chapter.content_vi.split('\n') %}
+                    {% set zh_paras = chapter.content_zh.split('\n') %}
+                    <div class="bilingual-wrapper">
+                        {% for p_vi in vi_paras %}
+                            {% if p_vi.strip() %}
+                                <div class="bilingual-pair">
+                                    <p class="bilingual-vi">{{ p_vi }}</p>
+                                    {% if loop.index0 < zh_paras|length and zh_paras[loop.index0].strip() %}
+                                        <p class="bilingual-zh">{{ zh_paras[loop.index0] }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <div class="chapter-bottom-nav">
+            {% if prev_chap %}
+                <a href="/chapter/{{ prev_chap.chapter_num }}" class="btn btn-secondary">
+                    ← Chương trước ({{ prev_chap.chapter_num }})
+                </a>
+            {% else %}
+                <button class="btn btn-secondary disabled" disabled>← Chương trước</button>
+            {% endif %}
+
+            <a href="/" class="btn btn-outline">
+                📚 Về Mục Lục
+            </a>
+
+            {% if next_chap %}
+                <a href="/chapter/{{ next_chap.chapter_num }}" class="btn btn-primary">
+                    Chương sau ({{ next_chap.chapter_num }}) →
+                </a>
+            {% else %}
+                <button class="btn btn-primary disabled" disabled>Hết chương mới</button>
+            {% endif %}
+        </div>
+    </article>
+</div>
+
+<!-- Floating Audio Player Bar (Trình đọc truyện bằng giọng nói AI) -->
+<div class="tts-floating-player" id="tts-floating-player" data-next-chap-num="{{ next_chap.chapter_num if next_chap else '' }}" data-current-chap-num="{{ chapter.chapter_num }}">
+    <!-- Mini Player Pill (Chế độ thu nhỏ) -->
+    <div class="tts-mini-pill" id="tts-mini-pill" title="Mở rộng bảng điều khiển giọng đọc" style="display: none;">
+        <div class="tts-mini-pulse">
+            <span class="tts-pulse-dot"></span>
+        </div>
+        <span class="tts-mini-text" id="tts-mini-status">🎧 Chương {{ chapter.chapter_num }}</span>
+        <button class="tts-mini-btn" id="tts-mini-play-btn" title="Phát / Tạm dừng">▶</button>
+        <button class="tts-mini-btn tts-mini-expand-btn" id="tts-mini-expand" title="Mở rộng bảng điều khiển">▲</button>
+    </div>
+
+    <!-- Main Expanded Player Container -->
+    <div class="tts-main-card" id="tts-main-card" style="display: none;">
+        <!-- Header: Tiêu đề & Thu nhỏ/Đóng -->
+        <div class="tts-card-header">
+            <div class="tts-header-info">
+                <span class="tts-soundwave-icon" id="tts-soundwave">
+                    <span class="wave-bar bar-1"></span>
+                    <span class="wave-bar bar-2"></span>
+                    <span class="wave-bar bar-3"></span>
+                    <span class="wave-bar bar-4"></span>
+                </span>
+                <div class="tts-title-wrap">
+                    <div class="tts-badge-row">
+                        <span class="tts-header-badge">AI Giọng Đọc</span>
+                        <span class="tts-reading-status" id="tts-reading-status">Sẵn sàng</span>
+                    </div>
+                    <div class="tts-now-reading" id="tts-now-reading" title="{{ chapter.title_vi or chapter.title_zh }}">
+                        {% if chapter.title_vi %}{{ chapter.title_vi }}{% else %}Chương {{ chapter.chapter_num }}: {{ chapter.title_zh }}{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="tts-header-actions">
+                <button class="tts-action-btn" id="tts-btn-minimize" title="Thu nhỏ thanh phát">⎯</button>
+                <button class="tts-action-btn" id="tts-btn-close" title="Đóng trình đọc">✕</button>
+            </div>
+        </div>
+
+        <!-- Progress Track -->
+        <div class="tts-progress-container">
+            <div class="tts-progress-meta">
+                <span class="tts-para-counter" id="tts-para-counter">Đoạn 0 / 0</span>
+                <span class="tts-percent-indicator" id="tts-percent-indicator">0%</span>
+            </div>
+            <div class="tts-progress-track" id="tts-progress-track" title="Nhấp để chuyển đoạn">
+                <div class="tts-progress-fill" id="tts-progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Controls Row -->
+        <div class="tts-controls-row">
+            <!-- Left: Playback buttons -->
+            <div class="tts-playback-buttons">
+                <button class="tts-ctrl-btn" id="tts-btn-prev" title="Đoạn trước (←)">
+                    <span>⏮</span>
+                </button>
+                <button class="tts-ctrl-btn tts-btn-primary-play" id="tts-btn-play-pause" title="Phát / Tạm dừng (Phím Space)">
+                    <span id="tts-play-icon">▶</span>
+                </button>
+                <button class="tts-ctrl-btn" id="tts-btn-stop" title="Dừng đọc">
+                    <span>⏹</span>
+                </button>
+                <button class="tts-ctrl-btn" id="tts-btn-next" title="Đoạn kế tiếp (→)">
+                    <span>⏭</span>
+                </button>
+            </div>
+
+            <!-- Middle: Voice & Speed -->
+            <div class="tts-settings-group">
+                <div class="tts-select-field">
+                    <label for="tts-voice-select">Giọng:</label>
+                    <select id="tts-voice-select" class="tts-select" title="Chọn giọng đọc tiếng Việt">
+                        <option value="">Đang tìm giọng Việt...</option>
+                    </select>
+                </div>
+
+                <div class="tts-select-field">
+                    <label for="tts-speed-select">Tốc độ:</label>
+                    <select id="tts-speed-select" class="tts-select" title="Tốc độ đọc">
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1.0x (Chuẩn)</option>
+                        <option value="1.15">1.15x</option>
+                        <option value="1.25">1.25x (Khuyên dùng)</option>
+                        <option value="1.4">1.4x</option>
+                        <option value="1.6">1.6x (Nhanh)</option>
+                        <option value="1.8">1.8x</option>
+                        <option value="2">2.0x</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Right: Auto-scroll & Auto-next chapter toggles -->
+            <div class="tts-toggles-group">
+                <label class="tts-toggle-item" title="Tự động cuộn màn hình mượt mà theo đoạn văn đang đọc">
+                    <input type="checkbox" id="tts-toggle-autoscroll" checked>
+                    <span>Cuộn theo đọc</span>
+                </label>
+                <label class="tts-toggle-item highlight-toggle" title="Tự động chuyển tiếp sang chương sau và đọc tiếp khi hết chương này">
+                    <input type="checkbox" id="tts-toggle-autonext" checked>
+                    <span>Tự chuyển chương</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick floating back to top button -->
+<button class="floating-top-btn" id="floating-top-btn" title="Lên đầu trang">↑</button>
+
+<script>
+    // Ghi nhận lịch sử đọc chương hiện tại vào LocalStorage
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            localStorage.setItem('novel_last_read_chap', '{{ chapter.chapter_num }}');
+            localStorage.setItem('novel_last_read_title', '{{ chapter.title_vi or chapter.title_zh }}');
+        } catch(e) {}
+    });
+</script>
+{% endblock %}
